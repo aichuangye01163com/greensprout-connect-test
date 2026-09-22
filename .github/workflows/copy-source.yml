@@ -19,14 +19,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          git clone --depth 1 --branch main https://github.com/aichuangye01163com/greensprout-connect.git source-repo
-
-          # Replace the test repository working tree with the source snapshot.
-          # Never copy the source .git directory or .env.
+          # Clean the test repository working tree first.
+          # Keep only the target repository's .git directory.
           find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          tar --exclude='.git' --exclude='.env' -cf - -C source-repo . | tar -xf - -C .
 
-          rm -rf source-repo
+          # Clone outside the working tree so the cleanup above cannot remove it.
+          git clone --depth 1 --branch main https://github.com/aichuangye01163com/greensprout-connect.git /tmp/greensprout-source
+
+          # Copy the source snapshot, excluding Git metadata and secrets.
+          tar --exclude='.git' --exclude='.env' -cf - -C /tmp/greensprout-source . | tar -xf - -C .
+
+          rm -rf /tmp/greensprout-source
 
       - name: Remove temporary workflow
         run: |
