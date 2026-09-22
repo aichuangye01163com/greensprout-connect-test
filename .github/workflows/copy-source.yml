@@ -12,12 +12,20 @@ jobs:
 
     steps:
       - name: Checkout test repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Copy source repository
+        shell: bash
         run: |
+          set -euo pipefail
+
           git clone --depth 1 --branch main https://github.com/aichuangye01163com/greensprout-connect.git source-repo
-          rsync -a --delete --exclude='.git' --exclude='.env' source-repo/ ./
+
+          # Replace the test repository working tree with the source snapshot.
+          # Never copy the source .git directory or .env.
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          tar --exclude='.git' --exclude='.env' -cf - -C source-repo . | tar -xf - -C .
+
           rm -rf source-repo
 
       - name: Remove temporary workflow
