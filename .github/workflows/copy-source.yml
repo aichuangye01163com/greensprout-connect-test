@@ -1,0 +1,33 @@
+name: Copy GreenSprout source snapshot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  copy-source:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout test repository
+        uses: actions/checkout@v7
+
+      - name: Copy source repository
+        run: |
+          git clone --depth 1 --branch main https://github.com/aichuangye01163com/greensprout-connect.git source-repo
+          rsync -a --delete --exclude='.git' --exclude='.env' source-repo/ ./
+          rm -rf source-repo
+
+      - name: Remove temporary workflow
+        run: |
+          rm -f .github/workflows/copy-source.yml
+
+      - name: Commit source snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "test: copy GreenSprout source snapshot" || echo "No changes to commit"
+          git push
